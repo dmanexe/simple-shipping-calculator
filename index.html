@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gaylord Box Calculator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <style>
+        :root {
+            --primary-color: #ed1c24;
+            --primary-hover: #c41920;
+            --background: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --border: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.5;
+            color: var(--text);
+            background: var(--background);
+            padding: 1.6rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 0.8rem;
+            padding: 1.6rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+
+        h1 {
+            margin-bottom: 1.6rem;
+            color: var(--text);
+            font-size: 1.6rem;
+        }
+
+        .box-inputs {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.2rem;
+            margin-bottom: 1.6rem;
+        }
+
+        .box-type {
+            background: var(--background);
+            padding: 1.2rem;
+            border-radius: 0.4rem;
+            border: 1px solid var(--border);
+        }
+
+        .box-type h3 {
+            margin-bottom: 0.8rem;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .box-count {
+            font-family: monospace;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .input-group {
+            margin-bottom: 0.8rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.4rem;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 0.4rem;
+            border: 1px solid var(--border);
+            border-radius: 0.3rem;
+            font-size: 0.9rem;
+        }
+
+        button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 0.3rem;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            width: 100%;
+        }
+
+        button:hover {
+            background: var(--primary-hover);
+        }
+
+        .progress-section {
+            margin-top: 1.6rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 1.2rem;
+            background: var(--border);
+            border-radius: 0.6rem;
+            overflow: hidden;
+            margin: 0.8rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary-color);
+            transition: width 0.3s ease;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0.8rem;
+            margin-top: 0.8rem;
+        }
+
+        .stat-item {
+            background: var(--background);
+            padding: 0.8rem;
+            border-radius: 0.4rem;
+            text-align: center;
+        }
+
+        .stat-item.total-boxes {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .stat-item.total-boxes .stat-value {
+            color: white;
+        }
+
+        .stat-item.total-boxes .stat-label {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: var(--text);
+            opacity: 0.8;
+        }
+
+        .box-list {
+            margin-top: 1.6rem;
+            border-top: 1px solid var(--border);
+            padding-top: 0.8rem;
+        }
+
+        .box-list h2 {
+            margin-bottom: 0.8rem;
+            font-size: 1.2rem;
+        }
+
+        .box-entry {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.6rem;
+            background: var(--background);
+            border-radius: 0.4rem;
+            margin-bottom: 0.4rem;
+            border: 1px solid var(--border);
+        }
+
+        .box-entry-info {
+            display: flex;
+            gap: 0.8rem;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+
+        .box-entry button {
+            background: #dc2626;
+            width: auto;
+            padding: 0.4rem 0.8rem;
+            font-size: 0.8rem;
+        }
+
+        .box-entry button:hover {
+            background: #b91c1c;
+        }
+
+        .box-dimensions {
+            font-size: 0.7rem;
+            color: var(--text);
+            opacity: 0.8;
+        }
+
+        @media (max-width: 1024px) {
+            .box-inputs {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 0.8rem;
+            }
+
+            .card {
+                padding: 1.2rem;
+            }
+
+            .box-inputs {
+                grid-template-columns: 1fr;
+            }
+            .stats {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .gaylord-section {
+            border: 2px solid var(--border);
+            border-radius: 0.8rem;
+            padding: 1.2rem;
+            margin-bottom: 1.6rem;
+            background: var(--card-bg);
+        }
+
+        .gaylord-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.2rem;
+            padding-bottom: 0.8rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .gaylord-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .gaylord-controls {
+            display: flex;
+            gap: 0.8rem;
+        }
+
+        .gaylord-controls button {
+            width: auto;
+            padding: 0.4rem 0.8rem;
+            font-size: 0.8rem;
+        }
+
+        .add-gaylord {
+            margin-bottom: 1.6rem;
+            text-align: center;
+        }
+
+        .add-gaylord button {
+            background: var(--primary-color);
+            color: white;
+            padding: 0.8rem 1.6rem;
+            border-radius: 0.4rem;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .add-gaylord button:hover {
+            background: var(--primary-hover);
+        }
+
+        .visualization-container {
+            width: 100%;
+            height: 400px;
+            margin: 1.2rem 0;
+            background: var(--background);
+            border-radius: 0.4rem;
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .visualization-container canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .visualization-controls {
+            display: flex;
+            gap: 0.8rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .visualization-controls button {
+            width: auto;
+            padding: 0.4rem 0.8rem;
+            font-size: 0.8rem;
+        }
+
+        .quick-add-buttons {
+            display: flex;
+            gap: 0.4rem;
+            margin-top: 0.4rem;
+        }
+
+        .quick-add-buttons button {
+            flex: 1;
+            padding: 0.2rem 0.4rem;
+            font-size: 0.8rem;
+            background: var(--background);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .quick-add-buttons button:hover {
+            background: var(--border);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>Gaylord Box Calculator</h1>
+            
+            <div class="add-gaylord">
+                <button onclick="addGaylord()">Add New Gaylord</button>
+            </div>
+
+            <div id="gaylords-container">
+                <!-- Gaylord sections will be added here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Gaylord dimensions (47x39.5x36 inches)
+        const GAYLORD_VOLUME = 47 * 39.5 * 36; // 66,834 cubic inches
+
+        // Box dimensions and their volumes
+        const BOX_VOLUMES = {
+            '6x6x6': 6 * 6 * 6,    // 216 cubic inches
+            '7x7x7': 7 * 7 * 7,    // 343 cubic inches
+            '12x6x6': 12 * 6 * 6,  // 432 cubic inches
+            '12x9x9': 12 * 9 * 9,  // 972 cubic inches
+            '5x5x3': 5 * 5 * 3     // 75 cubic inches
+        };
+
+        // Box dimensions for display
+        const BOX_DIMENSIONS = {
+            '6x6x6': '6" × 6" × 6"',
+            '7x7x7': '7" × 7" × 7"',
+            '12x6x6': '12" × 6" × 6"',
+            '12x9x9': '12" × 9" × 9"',
+            '5x5x3': '5" × 5" × 3"'
+        };
+
+        // Track all Gaylords
+        let gaylords = [];
+
+        // Three.js visualization setup
+        const VISUALIZATION_SETTINGS = {
+            cameraDistance: 33.33,
+            boxColors: {
+                '6x6x6': 0xff0000,
+                '7x7x7': 0x00ff00,
+                '12x6x6': 0x0000ff,
+                '12x9x9': 0xffff00,
+                '5x5x3': 0xff00ff
+            }
+        };
+
+        class GaylordVisualization {
+            constructor(containerId, gaylordId) {
+                this.containerId = containerId;
+                this.gaylordId = gaylordId;
+                this.scene = new THREE.Scene();
+                this.container = document.getElementById(containerId);
+                this.setup();
+            }
+
+            setup() {
+                // Setup renderer
+                this.renderer = new THREE.WebGLRenderer({ antialias: true });
+                this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
+                this.renderer.setClearColor(0x1a1a1a); // Dark background
+                this.container.appendChild(this.renderer.domElement);
+
+                // Setup camera
+                const aspect = this.container.clientWidth / this.container.clientHeight;
+                this.camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
+                this.camera.position.set(VISUALIZATION_SETTINGS.cameraDistance, VISUALIZATION_SETTINGS.cameraDistance, VISUALIZATION_SETTINGS.cameraDistance);
+                this.camera.lookAt(0, 0, 0);
+
+                // Setup controls
+                this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+                this.controls.enableDamping = true; // Add smooth damping effect
+                this.controls.dampingFactor = 0.05;
+                this.controls.screenSpacePanning = false;
+                this.controls.minDistance = VISUALIZATION_SETTINGS.cameraDistance * 0.5;
+                this.controls.maxDistance = VISUALIZATION_SETTINGS.cameraDistance * 2;
+                this.controls.maxPolarAngle = Math.PI / 2; // Limit vertical rotation
+
+                // Add lights
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+                this.scene.add(ambientLight);
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight.position.set(1, 1, 1);
+                this.scene.add(directionalLight);
+                const backLight = new THREE.DirectionalLight(0xffffff, 0.3);
+                backLight.position.set(-1, 1, -1);
+                this.scene.add(backLight);
+
+                // Create Gaylord container
+                this.createGaylordContainer();
+                
+                // Start animation loop
+                this.animate();
+
+                // Handle window resize
+                window.addEventListener('resize', () => this.onWindowResize());
+            }
+
+            onWindowResize() {
+                const width = this.container.clientWidth;
+                const height = this.container.clientHeight;
+                
+                this.camera.aspect = width / height;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(width, height);
+            }
+
+            createGaylordContainer() {
+                // Gaylord dimensions (47x39.5x36 inches)
+                const geometry = new THREE.BoxGeometry(47, 39.5, 36);
+                
+                // Create edges-only container
+                const edges = new THREE.EdgesGeometry(geometry);
+                const edgesMaterial = new THREE.LineBasicMaterial({ 
+                    color: 0xffffff,
+                    linewidth: 2
+                });
+                const edgesMesh = new THREE.LineSegments(edges, edgesMaterial);
+                this.scene.add(edgesMesh);
+
+                // Add grid helper for better depth perception
+                const gridHelper = new THREE.GridHelper(100, 20, 0x444444, 0x444444);
+                gridHelper.position.y = -19.75; // Half of Gaylord height
+                this.scene.add(gridHelper);
+            }
+
+            updateBoxes(quantities) {
+                // Remove existing boxes
+                this.scene.children = this.scene.children.filter(child => 
+                    child instanceof THREE.Light ||
+                    child instanceof THREE.GridHelper
+                );
+
+                // Recreate Gaylord container
+                this.createGaylordContainer();
+
+                // Create array to store all boxes for animation
+                const boxesToAnimate = [];
+
+                // Track occupied spaces
+                const occupiedSpaces = new Map();
+                const getSpaceKey = (x, y, z) => `${x},${y},${z}`;
+
+                // Helper function to check if a space is occupied
+                const isSpaceOccupied = (x, y, z, width, height, depth) => {
+                    for (let dx = 0; dx < width; dx++) {
+                        for (let dy = 0; dy < height; dy++) {
+                            for (let dz = 0; dz < depth; dz++) {
+                                const key = getSpaceKey(x + dx, y + dy, z + dz);
+                                if (occupiedSpaces.has(key)) return true;
+                            }
+                        }
+                    }
+                    return false;
+                };
+
+                // Helper function to mark space as occupied
+                const markSpaceOccupied = (x, y, z, width, height, depth) => {
+                    for (let dx = 0; dx < width; dx++) {
+                        for (let dy = 0; dy < height; dy++) {
+                            for (let dz = 0; dz < depth; dz++) {
+                                const key = getSpaceKey(x + dx, y + dy, z + dz);
+                                occupiedSpaces.set(key, true);
+                            }
+                        }
+                    }
+                };
+
+                // Place boxes in 3D space
+                Object.entries(quantities).forEach(([boxType, quantity]) => {
+                    if (quantity > 0) {
+                        const [width, height, depth] = boxType.split('x').map(Number);
+                        const geometry = new THREE.BoxGeometry(width, height, depth);
+                        
+                        // Create materials for each face with initial opacity 0
+                        const materials = [
+                            new THREE.MeshPhongMaterial({ color: VISUALIZATION_SETTINGS.boxColors[boxType], transparent: true, opacity: 0 }), // right
+                            new THREE.MeshPhongMaterial({ color: VISUALIZATION_SETTINGS.boxColors[boxType], transparent: true, opacity: 0 }), // left
+                            new THREE.MeshPhongMaterial({ color: VISUALIZATION_SETTINGS.boxColors[boxType], transparent: true, opacity: 0 }), // top
+                            new THREE.MeshPhongMaterial({ color: VISUALIZATION_SETTINGS.boxColors[boxType], transparent: true, opacity: 0 }), // bottom
+                            new THREE.MeshPhongMaterial({ color: VISUALIZATION_SETTINGS.boxColors[boxType], transparent: true, opacity: 0 }), // front
+                            new THREE.MeshPhongMaterial({ color: VISUALIZATION_SETTINGS.boxColors[boxType], transparent: true, opacity: 0 })  // back
+                        ];
+
+                        for (let i = 0; i < quantity; i++) {
+                            let foundPosition = false;
+                            let finalX = -23.5;
+                            let finalY = -19.75;
+                            let finalZ = -18;
+
+                            // Try each possible position from bottom to top
+                            for (let y = -19.75; y <= 19.75 - height; y++) {
+                                for (let x = -23.5; x <= 23.5 - width; x++) {
+                                    for (let z = -18; z <= 18 - depth; z++) {
+                                        if (!isSpaceOccupied(x, y, z, width, height, depth)) {
+                                            finalX = x;
+                                            finalY = y;
+                                            finalZ = z;
+                                            foundPosition = true;
+                                            break;
+                                        }
+                                    }
+                                    if (foundPosition) break;
+                                }
+                                if (foundPosition) break;
+                            }
+
+                            // If no position found, skip this box
+                            if (!foundPosition) {
+                                console.warn('No available position found for box');
+                                break;
+                            }
+
+                            // Create the box at the found position
+                            const box = new THREE.Mesh(geometry, materials);
+                            box.position.set(finalX + width/2, finalY + height/2, finalZ + depth/2);
+                            this.scene.add(box);
+
+                            // Add edges for the box
+                            const edges = new THREE.EdgesGeometry(geometry);
+                            const edgesMaterial = new THREE.LineBasicMaterial({ 
+                                color: 0xffffff,
+                                linewidth: 1,
+                                transparent: true,
+                                opacity: 0
+                            });
+                            const edgesMesh = new THREE.LineSegments(edges, edgesMaterial);
+                            edgesMesh.position.copy(box.position);
+                            this.scene.add(edgesMesh);
+
+                            // Mark the space as occupied
+                            markSpaceOccupied(finalX, finalY, finalZ, width, height, depth);
+
+                            // Store box and its properties for animation
+                            boxesToAnimate.push({
+                                box,
+                                edgesMesh,
+                                materials,
+                                edgesMaterial
+                            });
+                        }
+                    }
+                });
+
+                // Start animation sequence
+                const startTime = performance.now();
+                const animateBoxes = (timestamp) => {
+                    const elapsed = timestamp - startTime;
+                    const duration = 300; // 300ms animation
+                    const progress = Math.min(elapsed / duration, 1);
+
+                    // Easing function for smooth animation
+                    const easeOutCubic = 1 - Math.pow(1 - progress, 3);
+
+                    // Animate opacity for all boxes
+                    boxesToAnimate.forEach(boxData => {
+                        boxData.materials.forEach(material => material.opacity = easeOutCubic);
+                        boxData.edgesMaterial.opacity = easeOutCubic;
+                    });
+
+                    // Continue animation if not done
+                    if (progress < 1) {
+                        requestAnimationFrame(animateBoxes);
+                    }
+                };
+
+                // Start the animation
+                requestAnimationFrame(animateBoxes);
+            }
+
+            animate() {
+                requestAnimationFrame(() => this.animate());
+                this.controls.update(); // Update controls in animation loop
+                this.renderer.render(this.scene, this.camera);
+            }
+        }
+
+        // Store visualizations
+        const visualizations = new Map();
+
+        function createGaylordSection(id) {
+            const section = document.createElement('div');
+            section.className = 'gaylord-section';
+            section.id = `gaylord-${id}`;
+            section.innerHTML = `
+                <div class="gaylord-header">
+                    <div class="gaylord-title">Gaylord #${id}</div>
+                    <div class="gaylord-controls">
+                        <button onclick="removeGaylord(${id})">Remove Gaylord</button>
+                    </div>
+                </div>
+                
+                <div class="visualization-container" id="visualization-${id}"></div>
+                <div class="visualization-controls">
+                    <button onclick="resetView(${id})">Reset View</button>
+                </div>
+                
+                <div class="box-inputs">
+                    <div class="box-type">
+                        <h3>6x6x6 <span class="box-count">(0)</span></h3>
+                        <div class="input-group">
+                            <label for="box-6x6x6-${id}">Quantity</label>
+                            <input type="number" id="box-6x6x6-${id}" min="0" value="0">
+                            <div class="quick-add-buttons">
+                                <button onclick="quickAddBox('6x6x6', ${id}, 5)">+5</button>
+                                <button onclick="quickAddBox('6x6x6', ${id}, 10)">+10</button>
+                                <button onclick="quickAddBox('6x6x6', ${id}, 25)">+25</button>
+                            </div>
+                        </div>
+                        <button onclick="addBox('6x6x6', ${id})">Add Boxes</button>
+                    </div>
+
+                    <div class="box-type">
+                        <h3>7x7x7 <span class="box-count">(0)</span></h3>
+                        <div class="input-group">
+                            <label for="box-7x7x7-${id}">Quantity</label>
+                            <input type="number" id="box-7x7x7-${id}" min="0" value="0">
+                            <div class="quick-add-buttons">
+                                <button onclick="quickAddBox('7x7x7', ${id}, 5)">+5</button>
+                                <button onclick="quickAddBox('7x7x7', ${id}, 10)">+10</button>
+                                <button onclick="quickAddBox('7x7x7', ${id}, 25)">+25</button>
+                            </div>
+                        </div>
+                        <button onclick="addBox('7x7x7', ${id})">Add Boxes</button>
+                    </div>
+
+                    <div class="box-type">
+                        <h3>12x6x6 <span class="box-count">(0)</span></h3>
+                        <div class="input-group">
+                            <label for="box-12x6x6-${id}">Quantity</label>
+                            <input type="number" id="box-12x6x6-${id}" min="0" value="0">
+                            <div class="quick-add-buttons">
+                                <button onclick="quickAddBox('12x6x6', ${id}, 5)">+5</button>
+                                <button onclick="quickAddBox('12x6x6', ${id}, 10)">+10</button>
+                                <button onclick="quickAddBox('12x6x6', ${id}, 25)">+25</button>
+                            </div>
+                        </div>
+                        <button onclick="addBox('12x6x6', ${id})">Add Boxes</button>
+                    </div>
+
+                    <div class="box-type">
+                        <h3>12x9x9 <span class="box-count">(0)</span></h3>
+                        <div class="input-group">
+                            <label for="box-12x9x9-${id}">Quantity</label>
+                            <input type="number" id="box-12x9x9-${id}" min="0" value="0">
+                            <div class="quick-add-buttons">
+                                <button onclick="quickAddBox('12x9x9', ${id}, 5)">+5</button>
+                                <button onclick="quickAddBox('12x9x9', ${id}, 10)">+10</button>
+                                <button onclick="quickAddBox('12x9x9', ${id}, 25)">+25</button>
+                            </div>
+                        </div>
+                        <button onclick="addBox('12x9x9', ${id})">Add Boxes</button>
+                    </div>
+
+                    <div class="box-type">
+                        <h3>5x5x3 <span class="box-count">(0)</span></h3>
+                        <div class="input-group">
+                            <label for="box-5x5x3-${id}">Quantity</label>
+                            <input type="number" id="box-5x5x3-${id}" min="0" value="0">
+                            <div class="quick-add-buttons">
+                                <button onclick="quickAddBox('5x5x3', ${id}, 5)">+5</button>
+                                <button onclick="quickAddBox('5x5x3', ${id}, 10)">+10</button>
+                                <button onclick="quickAddBox('5x5x3', ${id}, 25)">+25</button>
+                            </div>
+                        </div>
+                        <button onclick="addBox('5x5x3', ${id})">Add Boxes</button>
+                    </div>
+                </div>
+
+                <div class="progress-section">
+                    <h2>Gaylord Capacity</h2>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill-${id}" style="width: 0%"></div>
+                    </div>
+                    <div class="stats">
+                        <div class="stat-item total-boxes">
+                            <div class="stat-value" id="total-boxes-${id}">0</div>
+                            <div class="stat-label">Total Boxes</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="used-space-${id}">0</div>
+                            <div class="stat-label">Used Space (cubic inches)</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="total-space-${id}">66,834</div>
+                            <div class="stat-label">Total Space (cubic inches)</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="remaining-space-${id}">66,834</div>
+                            <div class="stat-label">Remaining Space (cubic inches)</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="percentage-${id}">0%</div>
+                            <div class="stat-label">Capacity Used</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="box-list">
+                    <h2>Boxes in Gaylord</h2>
+                    <div id="box-entries-${id}"></div>
+                </div>
+            `;
+
+            // Initialize visualization after adding the section
+            setTimeout(() => {
+                const visualization = new GaylordVisualization(`visualization-${id}`, id);
+                visualizations.set(id, visualization);
+            }, 0);
+
+            return section;
+        }
+
+        function addGaylord() {
+            const id = gaylords.length + 1;
+            const section = createGaylordSection(id);
+            document.getElementById('gaylords-container').appendChild(section);
+            gaylords.push({
+                id: id,
+                quantities: {
+                    '6x6x6': 0,
+                    '7x7x7': 0,
+                    '12x6x6': 0,
+                    '12x9x9': 0,
+                    '5x5x3': 0
+                },
+                totalUsedSpace: 0
+            });
+        }
+
+        function removeGaylord(id) {
+            const section = document.getElementById(`gaylord-${id}`);
+            section.remove();
+            gaylords = gaylords.filter(g => g.id !== id);
+            
+            // Clean up visualization
+            const visualization = visualizations.get(id);
+            if (visualization) {
+                visualization.renderer.dispose();
+                visualizations.delete(id);
+            }
+        }
+
+        function updateDisplay(gaylordId) {
+            const gaylord = gaylords.find(g => g.id === gaylordId);
+            if (!gaylord) return;
+
+            // Update progress bar
+            const percentage = (gaylord.totalUsedSpace / GAYLORD_VOLUME) * 100;
+            document.getElementById(`progress-fill-${gaylordId}`).style.width = `${Math.min(percentage, 100)}%`;
+            
+            // Update statistics
+            document.getElementById(`used-space-${gaylordId}`).textContent = gaylord.totalUsedSpace.toLocaleString();
+            document.getElementById(`remaining-space-${gaylordId}`).textContent = (GAYLORD_VOLUME - gaylord.totalUsedSpace).toLocaleString();
+            document.getElementById(`percentage-${gaylordId}`).textContent = `${Math.round(percentage)}%`;
+
+            // Calculate and update total boxes
+            const totalBoxes = Object.values(gaylord.quantities).reduce((sum, qty) => sum + qty, 0);
+            document.getElementById(`total-boxes-${gaylordId}`).textContent = totalBoxes.toLocaleString();
+
+            // Update box counts only (not input fields)
+            for (const [boxType, quantity] of Object.entries(gaylord.quantities)) {
+                const boxTypeElement = Array.from(document.querySelectorAll(`#gaylord-${gaylordId} .box-type h3`))
+                    .find(h3 => h3.textContent.includes(boxType));
+                if (boxTypeElement) {
+                    const boxCount = boxTypeElement.querySelector('.box-count');
+                    if (boxCount) {
+                        boxCount.textContent = `(${quantity})`;
+                    }
+                }
+            }
+
+            // Update box entries list
+            const boxEntries = document.getElementById(`box-entries-${gaylordId}`);
+            boxEntries.innerHTML = '';
+
+            Object.entries(gaylord.quantities).forEach(([boxType, quantity]) => {
+                if (quantity > 0) {
+                    const entry = document.createElement('div');
+                    entry.className = 'box-entry';
+                    entry.innerHTML = `
+                        <div class="box-entry-info">
+                            <div>
+                                <strong>${quantity} ${boxType} Box${quantity > 1 ? 'es' : ''}</strong>
+                                <div class="box-dimensions">${BOX_DIMENSIONS[boxType]}</div>
+                            </div>
+                            <div>${(BOX_VOLUMES[boxType] * quantity).toLocaleString()} cubic inches</div>
+                        </div>
+                        <button onclick="removeBox('${boxType}', ${gaylordId})">Remove</button>
+                    `;
+                    boxEntries.appendChild(entry);
+                }
+            });
+
+            // Update visualization
+            updateVisualization(gaylordId);
+        }
+
+        function addBox(boxType, gaylordId) {
+            const input = document.getElementById(`box-${boxType}-${gaylordId}`);
+            const quantityToAdd = parseInt(input.value) || 0;
+            
+            const gaylord = gaylords.find(g => g.id === gaylordId);
+            if (!gaylord) return;
+            
+            // Calculate the volume for this addition
+            const volumeToAdd = BOX_VOLUMES[boxType] * quantityToAdd;
+            
+            // Check if adding these boxes would exceed the Gaylord capacity
+            if (gaylord.totalUsedSpace + volumeToAdd > GAYLORD_VOLUME) {
+                alert('Adding these boxes would exceed the Gaylord capacity!');
+                return;
+            }
+            
+            // Add to existing quantity instead of replacing it
+            gaylord.quantities[boxType] += quantityToAdd;
+            gaylord.totalUsedSpace = Object.entries(gaylord.quantities).reduce((total, [type, qty]) => {
+                return total + (BOX_VOLUMES[type] * qty);
+            }, 0);
+            
+            updateDisplay(gaylordId);
+        }
+
+        function removeBox(boxType, gaylordId) {
+            const gaylord = gaylords.find(g => g.id === gaylordId);
+            if (!gaylord) return;
+
+            gaylord.quantities[boxType] = 0;
+            gaylord.totalUsedSpace = Object.entries(gaylord.quantities).reduce((total, [type, qty]) => {
+                return total + (BOX_VOLUMES[type] * qty);
+            }, 0);
+            updateDisplay(gaylordId);
+        }
+
+        function quickAddBox(boxType, gaylordId, amount) {
+            const input = document.getElementById(`box-${boxType}-${gaylordId}`);
+            input.value = amount;
+            addBox(boxType, gaylordId);
+        }
+
+        function updateVisualization(gaylordId) {
+            const gaylord = gaylords.find(g => g.id === gaylordId);
+            if (!gaylord) return;
+
+            const visualization = visualizations.get(gaylordId);
+            if (visualization) {
+                visualization.updateBoxes(gaylord.quantities);
+            }
+        }
+
+        function resetView(gaylordId) {
+            const visualization = visualizations.get(gaylordId);
+            if (visualization) {
+                visualization.camera.position.set(VISUALIZATION_SETTINGS.cameraDistance, VISUALIZATION_SETTINGS.cameraDistance, VISUALIZATION_SETTINGS.cameraDistance);
+                visualization.camera.lookAt(0, 0, 0);
+                visualization.controls.reset();
+            }
+        }
+
+        // Initialize with one Gaylord
+        addGaylord();
+    </script>
+</body>
+</html>
